@@ -7,9 +7,9 @@ from datetime import datetime
 from matrix_text_lib import MatrixTextDisplay
 
 def main():
-    # Create the display instance
+    print("Main")
     display = MatrixTextDisplay()
-    
+    print("Display created")
     # Process arguments first (important!)
     if not display.process():
         display.print_help()
