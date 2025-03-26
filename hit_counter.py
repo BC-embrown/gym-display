@@ -27,7 +27,7 @@ class BreakBeamCounter:
         self.options.chain_length = 1
         self.options.parallel = 1
         self.options.hardware_mapping = 'regular'
-        self.options.gpio_slowdown = 2
+        self.options.gpio_slowdown = 5
         self.options.brightness = 100
         self.options.disable_hardware_pulsing = True
         
