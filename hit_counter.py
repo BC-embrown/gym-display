@@ -188,7 +188,7 @@ class BreakBeamCounter:
     def display_image(self, image_path, duration=None):
         try:
             path = os.path.dirname(os.path.realpath(__file__)) + "/" + 'logo.png'
-            img = Image.open(r'/home/pi/gym/gym-display/logo.png').convert('RGB')
+            img = Image.open(r'/home/pi/gym/gym-display/test.gif').convert('RGB')
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
             
             # Center the image
