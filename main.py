@@ -54,7 +54,7 @@ class TextDisplay(SampleBase):
         
         while True:
             canvas.Clear()
-            length = graphics.DrawText(canvas, font, pos, 10, color, text)
+            length = graphics.DrawText(canvas, font, pos, 32, color, text)
             pos -= 1
             if (pos + length < 0):
                 pos = canvas.width
