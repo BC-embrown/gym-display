@@ -30,7 +30,7 @@ class DirectTestCounter:
         
         # Try to load a font
         self.font = None
-        self.font_size = 20
+        self.font_size = 32
         self.text_color = (214,160,255)
         try:
             font_paths = [
