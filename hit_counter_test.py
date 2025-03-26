@@ -15,9 +15,6 @@ class TestHitCounter:
         
         self.display = MatrixDisplay()
         
-        self.display.parser.add_argument("--led-no-drop-privs", dest="drop_privileges",
-        help="Don't drop privileges from 'root' after initializing the hardware.",
-        action='store_false')
         self.display.parser.set_defaults(drop_privileges=False)
         
         if not self.display.process():
