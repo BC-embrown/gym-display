@@ -15,12 +15,12 @@ class DirectTestCounter:
         
         # Configure matrix options
         self.options = RGBMatrixOptions()
-        self.options.rows = 32
-        self.options.cols = 32
-        self.options.chain_length = 1
-        self.options.parallel = 1
+        self.options.rows = 64
+        self.options.cols = 64
+        self.options.chain_length = 0
+        self.options.parallel = 0
         self.options.hardware_mapping = 'regular'
-        self.options.gpio_slowdown = 2  # Add this to help with stability
+        self.options.gpio_slowdown = 5  # Add this to help with stability
         self.options.brightness = 100
         self.options.disable_hardware_pulsing = True  # Important for avoiding priority errors
         
