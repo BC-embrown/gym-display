@@ -31,7 +31,7 @@ class DirectTestCounter:
         # Try to load a font
         self.font = None
         self.font_size = 20
-        self.text_color = (255, 255, 255)
+        self.text_color = (214,160,255)
         try:
             font_paths = [
                 '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
