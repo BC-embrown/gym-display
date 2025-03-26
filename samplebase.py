@@ -44,8 +44,8 @@ class SampleBase(object):
 
         if self.args.led_gpio_mapping != None:
           options.hardware_mapping = self.args.led_gpio_mapping
-        options.rows = self.args.led_rows
-        options.cols = self.args.led_cols
+        options.rows = 64
+        options.cols = 64
         options.chain_length = self.args.led_chain
         options.parallel = self.args.led_parallel
         options.row_address_type = self.args.led_row_addr_type
@@ -67,7 +67,8 @@ class SampleBase(object):
           options.disable_hardware_pulsing = True
         if not self.args.drop_privileges:
           options.drop_privileges=False
-
+        options.disable_hardware_pulsing = True  # May reduce quality but avoids priority errors
+        options.drop_privileges = False  # Keeps root privileges
         self.matrix = RGBMatrix(options = options)
 
         try:
