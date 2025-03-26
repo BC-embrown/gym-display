@@ -9,7 +9,7 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 
 class BreakBeamCounter:
-    def __init__(self, logo_path="logo.png", debounce_time=1):
+    def __init__(self, logo_path="/home/pi/gym/gym-display/logo.png", debounce_time=1):
         self.count = 0
         self.logo_path = logo_path
         self.debounce_time = debounce_time
