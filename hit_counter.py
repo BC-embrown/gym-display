@@ -240,8 +240,8 @@ class BreakBeamCounter:
     def run(self):
         try:
             print("Starting break beam counter...")
-            
-            # Display logo if available
+            print(os.getcwd())
+            print(os.path.dirname(os.path.realpath(__file__)))
             print(self.logo_path)
             print(os.path.exists(self.logo_path))
             if os.path.exists(self.logo_path):
