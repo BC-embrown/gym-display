@@ -8,6 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 import traceback
+import getpass
+
 class BreakBeamCounter:
     def __init__(self, logo_path="./logo.png", debounce_time=1):
         self.count = 0
@@ -242,6 +244,8 @@ class BreakBeamCounter:
             print(os.path.dirname(os.path.realpath(__file__)))
             print(self.logo_path)
             print(os.path.exists(self.logo_path))
+            print("Env thinks the user is [%s]" % (os.getlogin()))
+            print("Effective user is [%s]" % (getpass.getuser()))
             if os.path.exists(self.logo_path):
                 print(f"Displaying logo for 3 seconds: {self.logo_path}")
                 self.display_image(self.logo_path, 3)
