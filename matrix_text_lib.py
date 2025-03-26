@@ -21,12 +21,13 @@ class MatrixTextDisplay(SampleBase):
         self.parser.add_argument("--wrap", help="Number of characters per line (0 for auto)", default=0, type=int)
         self.parser.add_argument("--font", help="TrueType font file path", default=None)
         
-
+        # For library use
         self._running = False
         self._thread = None
         self._stop_event = threading.Event()
         self._text_update_lock = threading.Lock()
         
+        # Display properties that can be changed dynamically
         self._display_text = "Hello world!"
         self._display_mode = "static"
         self._text_color = (255, 255, 0)
@@ -40,8 +41,9 @@ class MatrixTextDisplay(SampleBase):
     def process_args(self):
         """Process command line arguments and set display properties"""
         if not hasattr(self, 'args'):
-            self.args = self.parser.parse_args()
+            self.process()  # This calls the SampleBase process method
             
+        # Set the display properties from arguments
         self._display_text = self.args.text
         self._display_mode = self.args.mode.lower()
         self._font_size = self.args.font_size
@@ -50,19 +52,20 @@ class MatrixTextDisplay(SampleBase):
         self._font_path = self.args.font
         self._random_interval = self.args.random_interval
         
+        # Parse colors
         try:
             r, g, b = map(int, self.args.color.split(','))
             self._text_color = (r, g, b)
         except:
             print("Text color format should be R,G,B (e.g., 255,255,0 for yellow)")
-            self._text_color = (255, 255, 0) 
+            self._text_color = (255, 255, 0)  # Default to yellow
             
         try:
             r, g, b = map(int, self.args.bg_color.split(','))
             self._bg_color = (r, g, b)
         except:
             print("Background color format should be R,G,B (e.g., 0,0,0 for black)")
-            self._bg_color = (0, 0, 0)
+            self._bg_color = (0, 0, 0)  # Default to black
     
     def set_text(self, text):
         """Update the displayed text"""
@@ -116,17 +119,21 @@ class MatrixTextDisplay(SampleBase):
         """Generate image with the current text and settings"""
         width, height = self.matrix.width, self.matrix.height
         
+        # Create a blank image with background color
         image = Image.new('RGB', (width, height), self._bg_color)
         draw = ImageDraw.Draw(image)
         
+        # Try to use the specified font or fall back to default
         font = None
         try:
             if self._font_path:
                 font = ImageFont.truetype(self._font_path, self._font_size)
             else:
+                # Try to use a default system font
                 font_paths = [
-                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                    'C:\\Windows\\Fonts\\arial.ttf'
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # Linux
+                    '/Library/Fonts/Arial.ttf',  # macOS
+                    'C:\\Windows\\Fonts\\arial.ttf',  # Windows
                 ]
                 for path in font_paths:
                     if os.path.exists(path):
@@ -139,20 +146,26 @@ class MatrixTextDisplay(SampleBase):
         if font is None:
             font = ImageFont.load_default()
         
+        # Get text and determine wrapping
         text = self._display_text
         if self._wrap_length > 0:
+            # Use specified wrap length
             wrapped_text = textwrap.fill(text, self._wrap_length)
         else:
+            # Auto-wrap based on image width
             avg_char_width = draw.textlength("X", font=font)
             chars_per_line = max(1, int(width / avg_char_width))
             wrapped_text = textwrap.fill(text, chars_per_line)
         
+        # Calculate text position to center it
         text_bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
         
+        # Center text position
         position = ((width - text_width) // 2, (height - text_height) // 2)
         
+        # Draw the text
         draw.multiline_text(position, wrapped_text, font=font, fill=self._text_color, align="center")
         
         return image
@@ -163,13 +176,19 @@ class MatrixTextDisplay(SampleBase):
             print("Display is already running.")
             return
         
+        # Make sure we've processed arguments and initialized the matrix
         if not hasattr(self, 'matrix'):
-            if not self.process():
-                self.print_help()
-                return False
+            print("Error: Matrix not initialized. Call process() first.")
+            return False
         
+        # Process arguments if not already done
+        if not hasattr(self, 'args'):
+            self.process_args()
+        
+        # Reset stop event
         self._stop_event.clear()
         
+        # Start the display thread
         self._thread = threading.Thread(target=self._display_loop)
         self._thread.daemon = True
         self._running = True
@@ -177,6 +196,7 @@ class MatrixTextDisplay(SampleBase):
         return True
     
     def stop(self):
+        """Stop the display thread"""
         if not self._running:
             return
         
@@ -186,14 +206,17 @@ class MatrixTextDisplay(SampleBase):
         self._running = False
     
     def _display_loop(self):
+        """Main display loop that handles dynamic updates"""
         try:
             while not self._stop_event.is_set():
+                # Create text image with current settings
                 with self._text_update_lock:
                     mode = self._display_mode
                     image = self.create_text_image()
                     speed = self._scroll_speed
                     random_interval = self._random_interval
                 
+                # Choose display mode
                 if mode == "scroll-h" or mode == "scroll":
                     self._scroll_horizontal(image, speed)
                     if self._stop_event.is_set():
@@ -224,15 +247,19 @@ class MatrixTextDisplay(SampleBase):
         img_width, img_height = image.size
         double_buffer = self.matrix.CreateFrameCanvas()
         
+        # Create an image that's wider for smooth scrolling
         if img_width < self.matrix.width:
+            # If image is smaller than display, create space for scrolling
             scroll_image = Image.new('RGB', (self.matrix.width * 2, img_height), self._bg_color)
             scroll_image.paste(image, (0, 0))
             scroll_image.paste(image, (self.matrix.width, 0))
             img_width = scroll_image.width
             image = scroll_image
         
+        # Scroll
         xpos = 0
         while not self._stop_event.is_set():
+            # Check if settings have changed
             with self._text_update_lock:
                 if self._display_mode != "scroll-h" and self._display_mode != "scroll":
                     break
@@ -249,18 +276,23 @@ class MatrixTextDisplay(SampleBase):
             time.sleep(current_speed)
     
     def _static_image(self, image):
+        """Static image display with periodic refresh to check for updates"""
         self.matrix.SetImage(image.convert('RGB'))
         
-        check_interval = 0.1 
+        # Keep checking for stop or mode change
+        check_interval = 0.1  # seconds between checks
         while not self._stop_event.is_set():
+            # Check if we should exit this mode
             with self._text_update_lock:
                 if self._display_mode != "static":
                     break
             time.sleep(check_interval)
     
     def run(self):
+        """Original run method for backward compatibility"""
         self.process_args()
         
+        # Generate the text image
         image = self.create_text_image()
         
         mode = self._display_mode
@@ -275,18 +307,35 @@ class MatrixTextDisplay(SampleBase):
         else:
             self._static_image(image)
 
+# Example usage of the library
+if __name__ == "__main__":
+    # Method 1: Run directly with command-line args (original behavior)
+    # display = MatrixTextDisplay()
+    # if (not display.process()):
+    #     display.print_help()
+    # else:
+    #     try:
+    #         display.run()
+    #     except KeyboardInterrupt:
+    #         print("Exiting\n")
+    #         sys.exit(0)
+    
     def _scroll_vertical(self, image, direction, speed):
+        """Vertical scrolling implementation with stop check"""
         img_width, img_height = image.size
         double_buffer = self.matrix.CreateFrameCanvas()
         
+        # Create an image that's taller for smooth vertical scrolling
         scroll_image = Image.new('RGB', (img_width, self.matrix.height * 2), self._bg_color)
         scroll_image.paste(image, (0, 0))
         scroll_image.paste(image, (0, self.matrix.height))
         img_height = scroll_image.height
         image = scroll_image
-
+        
+        # Scroll
         ypos = 0
         while not self._stop_event.is_set():
+            # Check if settings have changed
             with self._text_update_lock:
                 mode_dir = "up" if self._display_mode == "scroll-up" else "down"
                 if mode_dir != direction:
@@ -315,39 +364,49 @@ class MatrixTextDisplay(SampleBase):
             time.sleep(current_speed)
     
     def _scroll_random(self, image, speed, random_interval):
+        """Random scrolling implementation with stop check"""
+        # Prepare images for both horizontal and vertical scrolling
         img_width, img_height = image.size
         
+        # Create horizontal scrolling image
         h_scroll_image = Image.new('RGB', (self.matrix.width * 2, img_height), self._bg_color)
         h_scroll_image.paste(image, (0, 0))
         h_scroll_image.paste(image, (self.matrix.width, 0))
         
+        # Create vertical scrolling image
         v_scroll_image = Image.new('RGB', (img_width, self.matrix.height * 2), self._bg_color)
         v_scroll_image.paste(image, (0, 0))
         v_scroll_image.paste(image, (0, self.matrix.height))
         
         double_buffer = self.matrix.CreateFrameCanvas()
         
+        # Available scroll methods
         scroll_methods = ["horizontal", "up", "down"]
         current_method = random.choice(scroll_methods)
         
+        # Position trackers
         xpos = 0
         ypos = 0
         
+        # Timing variables
         last_change_time = time.time()
         
         while not self._stop_event.is_set():
+            # Check if settings have changed
             with self._text_update_lock:
                 if self._display_mode != "random":
                     break
                 current_speed = self._scroll_speed
                 current_interval = self._random_interval
             
+            # Check if it's time to change the scroll method
             current_time = time.time()
             if current_time - last_change_time >= current_interval:
                 available_methods = [m for m in scroll_methods if m != current_method]
                 current_method = random.choice(available_methods)
                 last_change_time = current_time
             
+            # Handle the current scroll method
             if current_method == "horizontal":
                 xpos += 1
                 if xpos > h_scroll_image.width / 2:
