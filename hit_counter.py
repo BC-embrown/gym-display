@@ -9,9 +9,9 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 
 class BreakBeamCounter:
-    def __init__(self, logo_path="/home/pi/gym/gym-display/logo.png", debounce_time=1):
+    def __init__(self,, debounce_time=1):
         self.count = 0
-        self.logo_path = logo_path
+        self.logo_path = self.find_logo()
         self.debounce_time = debounce_time
         self.last_hit_time = 0
         self.running = True
@@ -250,6 +250,27 @@ class BreakBeamCounter:
         self.canvas.SetImage(img)
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
+    def find_logo(self):
+        """Search for the logo file in multiple locations"""
+        # List of possible locations to check
+        possible_paths = [
+            self.logo_path,                               # Original path
+            os.path.abspath(self.logo_path),              # Absolute path
+            os.path.join(os.getcwd(), self.logo_path),    # Current directory
+            os.path.join(os.path.dirname(__file__), self.logo_path),  # Script directory
+            "/home/pi/gym/gym-display/logo.png",          # Hardcoded full path
+            "./logo.png"                                  # Current directory explicit
+        ]
+        
+        for path in possible_paths:
+            print(f"Checking for logo at: {path}")
+            if os.path.exists(path):
+                print(f"Found logo at: {path}")
+                return path
+        
+        print("Logo not found in any location")
+        return None
+
     def run(self):
         try:
             print("Starting break beam counter...")
