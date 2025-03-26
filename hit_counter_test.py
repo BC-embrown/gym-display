@@ -6,13 +6,23 @@ import threading
 from matrix_display import MatrixDisplay
 
 class TestHitCounter:
-    def __init__(self, logo_path="logo.png", debounce_time=0.5):
+    def __init__(self, logo_path="logo.png", sensor_pins=[17, 18, 27, 22], debounce_time=0.5):
         self.count = 0
         self.logo_path = logo_path
+        self.sensor_pins = sensor_pins
         self.debounce_time = debounce_time
         self.last_hit_time = 0
         
         self.display = MatrixDisplay()
+        
+        # Add these options to prevent priority errors
+        self.display.parser.add_argument("--led-no-hardware-pulse", action="store_true",
+        help="Don't use hardware pin-pulse generation")
+        self.display.parser.add_argument("--led-no-drop-privs", dest="drop_privileges",
+        help="Don't drop privileges from 'root' after initializing the hardware.",
+        action='store_false')
+        self.display.parser.set_defaults(drop_privileges=False)
+        
         if not self.display.process():
             self.display.print_help()
             sys.exit(1)

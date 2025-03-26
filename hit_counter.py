@@ -14,6 +14,15 @@ class HitCounter:
         self.last_hit_time = 0
         
         self.display = MatrixDisplay()
+        
+        # Add these options to prevent priority errors
+        self.display.parser.add_argument("--led-no-hardware-pulse", action="store_true",
+        help="Don't use hardware pin-pulse generation")
+        self.display.parser.add_argument("--led-no-drop-privs", dest="drop_privileges",
+        help="Don't drop privileges from 'root' after initializing the hardware.",
+        action='store_false')
+        self.display.parser.set_defaults(drop_privileges=False)
+        
         if not self.display.process():
             self.display.print_help()
             sys.exit(1)
