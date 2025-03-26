@@ -9,7 +9,7 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 
 class BreakBeamCounter:
-    def __init__(self, logo_path="/home/pi/gym/gym-display/logo.png", debounce_time=1):
+    def __init__(self, logo_path="./logo.png", debounce_time=1):
         self.count = 0
         self.logo_path = logo_path
         self.debounce_time = debounce_time
@@ -187,10 +187,6 @@ class BreakBeamCounter:
     
     def display_image(self, image_path, duration=None):
         try:
-            if not os.path.exists(image_path):
-                print(f"Image not found: {image_path}")
-                return False
-                
             img = Image.open(image_path).convert('RGB')
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
             
