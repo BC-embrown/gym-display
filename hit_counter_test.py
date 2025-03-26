@@ -13,9 +13,11 @@ class TestHitCounter:
         self.last_hit_time = 0
         
         self.display = MatrixDisplay()
+
         if not self.display.process():
             self.display.print_help()
             sys.exit(1)
+        self.display.start()
     
     def keyboard_listener(self):
         print("Press SPACE to simulate a hit, Q to quit")
