@@ -2,7 +2,7 @@
 import time
 import sys
 import signal
-from matrix_text_lib import MatrixTextDisplay
+from matrix_display import MatrixTextDisplay
 
 def main():
 
