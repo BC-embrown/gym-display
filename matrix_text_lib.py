@@ -40,10 +40,12 @@ class MatrixTextDisplay(SampleBase):
         
     def process_args(self):
         """Process command line arguments and set display properties"""
-        if not hasattr(self, 'args'):
-            self.process()  # This calls the SampleBase process method
+        # Call the parent class's process method to handle the matrix initialization
+        result = super(MatrixTextDisplay, self).process()
+        if not result:
+            return False
             
-        # Set the display properties from arguments
+        # Now we can safely set our display properties
         self._display_text = self.args.text
         self._display_mode = self.args.mode.lower()
         self._font_size = self.args.font_size
@@ -52,25 +54,27 @@ class MatrixTextDisplay(SampleBase):
         self._font_path = self.args.font
         self._random_interval = self.args.random_interval
         
-        # Parse colors
+        # Parse colors from arguments
         try:
             r, g, b = map(int, self.args.color.split(','))
             self._text_color = (r, g, b)
         except:
             print("Text color format should be R,G,B (e.g., 255,255,0 for yellow)")
-            self._text_color = (255, 255, 0)  # Default to yellow
             
         try:
             r, g, b = map(int, self.args.bg_color.split(','))
             self._bg_color = (r, g, b)
         except:
             print("Background color format should be R,G,B (e.g., 0,0,0 for black)")
-            self._bg_color = (0, 0, 0)  # Default to black
+            
+        return True
     
     def set_text(self, text):
         """Update the displayed text"""
         with self._text_update_lock:
+            old_text = self._display_text
             self._display_text = text
+            print(f"Text updated from '{old_text}' to '{text}'")
     
     def set_mode(self, mode):
         """Update the display mode"""
@@ -207,36 +211,47 @@ class MatrixTextDisplay(SampleBase):
     
     def _display_loop(self):
         """Main display loop that handles dynamic updates"""
+        last_text = None
+        last_color = None
+        last_mode = None
+        
         try:
             while not self._stop_event.is_set():
-                # Create text image with current settings
+                # Check if we need to regenerate the image due to changes
                 with self._text_update_lock:
+                    text_changed = last_text != self._display_text
+                    color_changed = last_color != self._text_color
+                    mode_changed = last_mode != self._display_mode
+                    
                     mode = self._display_mode
-                    image = self.create_text_image()
+                    if text_changed or color_changed:
+                        print(f"Text or color changed, regenerating image. Text: '{self._display_text}'")
+                        image = self.create_text_image()
+                        last_text = self._display_text
+                        last_color = self._text_color
                     speed = self._scroll_speed
                     random_interval = self._random_interval
                 
                 # Choose display mode
-                if mode == "scroll-h" or mode == "scroll":
-                    self._scroll_horizontal(image, speed)
-                    if self._stop_event.is_set():
-                        break
-                elif mode == "scroll-up":
-                    self._scroll_vertical(image, "up", speed)
-                    if self._stop_event.is_set():
-                        break
-                elif mode == "scroll-down":
-                    self._scroll_vertical(image, "down", speed)
-                    if self._stop_event.is_set():
-                        break
-                elif mode == "random":
-                    self._scroll_random(image, speed, random_interval)
-                    if self._stop_event.is_set():
-                        break
-                else:  # static
-                    self._static_image(image)
-                    if self._stop_event.is_set():
-                        break
+                if mode_changed or text_changed or color_changed:
+                    # Force refresh by breaking out of current display mode
+                    if self._thread and self._thread.is_alive():
+                        self._stop_event.set()
+                        time.sleep(0.1)
+                        self._stop_event.clear()
+                    
+                    if mode == "scroll-h" or mode == "scroll":
+                        self._scroll_horizontal(image, speed)
+                    elif mode == "scroll-up":
+                        self._scroll_vertical(image, "up", speed)
+                    elif mode == "scroll-down":
+                        self._scroll_vertical(image, "down", speed)
+                    elif mode == "random":
+                        self._scroll_random(image, speed, random_interval)
+                    else:  # static
+                        self._static_image(image)
+                    
+                    last_mode = mode
         except Exception as e:
             print(f"Error in display loop: {e}")
         finally:
