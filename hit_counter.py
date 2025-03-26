@@ -242,8 +242,8 @@ class BreakBeamCounter:
             print("Starting break beam counter...")
 
             if os.path.exists(self.logo_path):
-                print(f"Displaying logo for 3 seconds: {self.logo_path}")
-                self.display_image(self.logo_path, 3)
+                print(f"Displaying logo for 5 seconds: {self.logo_path}")
+                self.display_image(self.logo_path, 5)
             
             # Initialize counter display
             self.display_number(0)
