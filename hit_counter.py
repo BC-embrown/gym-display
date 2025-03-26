@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 class DirectHitCounter:
-    def __init__(self, logo_path="logo.png", sensor_pins=[37, 36, 29, 31], debounce_time=0.5):
+    def __init__(self, logo_path="logo.png", sensor_pins=['gpio-538', 'gpio-528', 'gpio-517', 'gpio-518'], debounce_time=0.5):
         self.count = 0
         self.logo_path = logo_path
         self.sensor_pins = sensor_pins
