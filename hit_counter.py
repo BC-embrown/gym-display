@@ -240,12 +240,7 @@ class BreakBeamCounter:
     def run(self):
         try:
             print("Starting break beam counter...")
-            print(os.getcwd())
-            print(os.path.dirname(os.path.realpath(__file__)))
-            print(self.logo_path)
-            print(os.path.exists(self.logo_path))
-            print("Env thinks the user is [%s]" % (os.getlogin()))
-            print("Effective user is [%s]" % (getpass.getuser()))
+
             if os.path.exists(self.logo_path):
                 print(f"Displaying logo for 3 seconds: {self.logo_path}")
                 self.display_image(self.logo_path, 3)
