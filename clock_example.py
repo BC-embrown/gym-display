@@ -14,12 +14,12 @@ def main():
     if not display.process():
         display.print_help()
         return
-        
+    print("Process")
     # Configure initial display
     display.set_mode("static")
     display.set_font_size(16)  # Larger font for the clock
     display.set_color((0, 191, 255))  # Deep Sky Blue
-    
+    print("Config")
     # Initialize with current time instead of default text
     now = datetime.now()
     display.set_text(now.strftime("%H:%M:%S"))
