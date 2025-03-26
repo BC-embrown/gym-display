@@ -187,32 +187,45 @@ class BreakBeamCounter:
     
     def display_image(self, image_path, duration=None):
         try:
+            print(f"Attempting to open image: {image_path}")
             if not os.path.exists(image_path):
                 print(f"Image not found: {image_path}")
                 return False
                 
-            img = Image.open(image_path).convert('RGB')
+            img = Image.open(image_path)
+            print(f"Image opened successfully. Format: {img.format}, Size: {img.size}, Mode: {img.mode}")
+            img = img.convert('RGB')
+            print("Converted to RGB")
+            
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
+            print(f"Resized to: {img.size}")
             
             # Center the image
             width, height = img.size
             x_offset = (self.matrix.width - width) // 2
             y_offset = (self.matrix.height - height) // 2
+            print(f"Positioning at offset: ({x_offset}, {y_offset})")
             
             # Clear the canvas
             self.canvas.Clear()
+            print("Canvas cleared")
             
             # Display the image
             self.canvas.SetImage(img, x_offset, y_offset)
+            print("Image set to canvas")
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
+            print("Canvas swapped")
             
             if duration:
+                print(f"Waiting for {duration} seconds")
                 time.sleep(duration)
                 
             return True
-            
+                
         except Exception as e:
             print(f"Error displaying image: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def display_number(self, number):
