@@ -15,14 +15,14 @@ def main():
     
     if not display.start():
         return
-        
+    print("Display started")
     def signal_handler(sig, frame):
         print("Exiting...")
         display.stop()
         sys.exit(0)
         
     signal.signal(signal.SIGINT, signal_handler)
-    
+    print("Signal handler set")
     try:
         formats = [
             "%H:%M:%S",      
@@ -44,7 +44,7 @@ def main():
         ]
         color_index = 0
         color_change_time = time.time() + 5 
-        
+        print("Color change time set")
         while True:
             now = datetime.now()
             
