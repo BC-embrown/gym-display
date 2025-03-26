@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Example: Digital Clock using the Matrix Text Display Library
+# Debugged Clock Example
 import time
 import sys
 import signal
@@ -7,27 +7,45 @@ from datetime import datetime
 from matrix_text_lib import MatrixTextDisplay
 
 def main():
-    print("Main")
+    print("Starting clock application...")
+    
+    # Create the display instance
     display = MatrixTextDisplay()
-    print("Display created")
-    # Process arguments first (important!)
-    if not display.process():
+    print("Display instance created")
+    
+    # Process arguments explicitly
+    print("Processing arguments...")
+    result = display.process()
+    print(f"Process result: {result}")
+    
+    if not result:
+        print("Failed to process arguments, printing help and exiting")
         display.print_help()
         return
-    print("Process")
-    # Configure initial display
-    display.set_mode("static")
-    display.set_font_size(16)  # Larger font for the clock
-    display.set_color((0, 191, 255))  # Deep Sky Blue
-    print("Config")
-    # Initialize with current time instead of default text
+        
+    # Initialize with current time text BEFORE starting the thread
     now = datetime.now()
-    display.set_text(now.strftime("%H:%M:%S"))
-    print("Text set")
+    current_time = now.strftime("%H:%M:%S")
+    print(f"Setting initial time to: {current_time}")
+    display.set_text(current_time)
+    
+    # Configure display properties
+    print("Configuring display...")
+    display.set_mode("static")
+    display.set_font_size(16)
+    display.set_color((0, 191, 255))  # Deep Sky Blue
+    
     # Start the display
-    if not display.start():
+    print("Starting display thread...")
+    start_result = display.start()
+    print(f"Start result: {start_result}")
+    
+    if not start_result:
+        print("Failed to start display, exiting")
         return
-    print("Start")
+    
+    print("Display thread started successfully")
+    
     # Setup signal handler for clean exit
     def signal_handler(sig, frame):
         print("Exiting...")
@@ -35,63 +53,27 @@ def main():
         sys.exit(0)
         
     signal.signal(signal.SIGINT, signal_handler)
-    print("Signal handler set")
+    
     try:
-        # Display different clock formats
-        formats = [
-            "%H:%M:%S",      # 24-hour with seconds
-            "%H:%M",         # 24-hour without seconds
-            "%I:%M:%S %p",   # 12-hour with seconds and AM/PM
-            "%I:%M %p",      # 12-hour without seconds, with AM/PM
-            "%b %d\n%H:%M"   # Date and time
-        ]
-        
-        format_index = 0
-        format_change_time = time.time() + 20  # Change format every 20 seconds
-        
-        # Color cycle variables
-        colors = [
-            (255, 255, 255),  # White
-            (0, 191, 255),    # Deep Sky Blue
-            (255, 215, 0),    # Gold
-            (152, 251, 152),  # Pale Green
-            (255, 105, 180),  # Hot Pink
-        ]
-        color_index = 0
-        color_change_time = time.time() + 5  # Change color every 5 seconds
-        print("Color change time set")
+        print("Entering main loop...")
         while True:
             # Get current time
             now = datetime.now()
+            time_str = now.strftime("%H:%M:%S")
             
-            # Format the time according to current format
-            time_str = now.strftime(formats[format_index])
+            # Update display text
+            print(f"Updating time to: {time_str}")
             display.set_text(time_str)
             
-            # Check if we should change format
-            current_time = time.time()
-            if current_time >= format_change_time:
-                format_index = (format_index + 1) % len(formats)
-                format_change_time = current_time + 20
-                print(f"Switching to format: {formats[format_index]}")
-                
-                # When changing format, adjust font size based on complexity
-                if "%b" in formats[format_index] or "\n" in formats[format_index]:
-                    display.set_font_size(14)  # Smaller for multiline/date formats
-                else:
-                    display.set_font_size(16)  # Larger for time-only formats
-            
-            if current_time >= color_change_time:
-                color_index = (color_index + 1) % len(colors)
-                display.set_color(colors[color_index])
-                color_change_time = current_time + 5
-            
-            time.sleep(0.5)
+            # Wait before updating again
+            time.sleep(1)
             
     except KeyboardInterrupt:
         print("Interrupted by user")
     finally:
+        print("Stopping display...")
         display.stop()
+        print("Display stopped")
         
 if __name__ == "__main__":
     main()
