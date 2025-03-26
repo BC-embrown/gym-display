@@ -9,9 +9,9 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 
 class BreakBeamCounter:
-    def __init__(self, debounce_time=1):
+    def __init__(self, logo_path="/home/pi/gym/gym-display/logo.png", debounce_time=1):
         self.count = 0
-        self.logo_path = self.find_logo()
+        self.logo_path = logo_path
         self.debounce_time = debounce_time
         self.last_hit_time = 0
         self.running = True
@@ -275,10 +275,12 @@ class BreakBeamCounter:
         try:
             print("Starting break beam counter...")
             
-            # Display logo if available
-            if os.path.exists(self.logo_path):
-                print(f"Displaying logo for 3 seconds: {self.logo_path}")
-                self.display_image(self.logo_path, 3)
+            logo_path = self.find_logo()
+            if logo_path:
+                print(f"Displaying logo for 3 seconds: {logo_path}")
+                self.display_image(logo_path, 3)
+            else:
+                print("No logo found, skipping logo display")
             
             # Initialize counter display
             self.display_number(0)
