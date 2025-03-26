@@ -260,7 +260,12 @@ class BreakBeamCounter:
             # Decode the embedded logo
             logo_data = base64.b64decode(LOGO_BASE64)
             logo_stream = io.BytesIO(logo_data)
-            img = Image.open(logo_stream).convert('RGB')
+            
+            # Explicitly specify the format (adjust if your logo is not PNG)
+            img = Image.open(logo_stream, formats=["PNG"]).convert('RGB')
+            
+            # Print image details for debugging
+            print(f"Image opened: Size={img.size}, Mode={img.mode}")
             
             # Resize and display
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
@@ -270,6 +275,8 @@ class BreakBeamCounter:
             return True
         except Exception as e:
             print(f"Error displaying embedded logo: {e}")
+            import traceback
+            traceback.print_exc()  # Print the full stack trace
             return False
 
 
