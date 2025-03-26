@@ -188,6 +188,7 @@ class BreakBeamCounter:
     def display_image(self, image_path, duration=None):
         try:
             path = os.path.dirname(os.path.realpath(__file__)) + "/" + 'logo.png'
+            path = '//home//pi//gym//gym-display//logo.png'
             img = Image.open(path).convert('RGB')
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
             
