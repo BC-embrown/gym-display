@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import time
 import sys
-import osa#!/usr/bin/env python3
 import time
 import sys
 import os
