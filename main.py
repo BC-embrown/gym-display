@@ -2,6 +2,7 @@
 # Display text on an RGB LED matrix with options for scrolling or static display
 from samplebase import SampleBase
 from rgbmatrix import graphics
+#from RGBMatrixEmulator import graphics
 import time
 import os
 
@@ -9,7 +10,7 @@ class TextDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
         super(TextDisplay, self).__init__(*args, **kwargs)
         self.parser.add_argument("-t", "--text", help="The text to display on the RGB LED panel", default="Hello world!")
-        self.parser.add_argument("-m", "--mode", help="Display mode: 'scroll' or 'static'", default="scroll")
+        self.parser.add_argument("--mode", help="Display mode: 'scroll' or 'static'", default="scroll")
         self.parser.add_argument("-f", "--font", help="Font to use from the fonts directory", default="7x13.bdf")
         self.parser.add_argument("--color", help="Text color in R,G,B format (0-255)", default="255,255,0")
         self.parser.add_argument("--speed", help="Scroll speed (lower is faster)", default=0.05, type=float)
