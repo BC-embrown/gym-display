@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-import time
-import sys
+#!/usr/bin/env python3
 import time
 import sys
 import os
-import RPi.GPIO as GPIO
+import gpiod
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
+import threading
 
-class DirectHitCounter:
-    def __init__(self, logo_path="logo.png", sensor_pins=['26', '16', '5', '6'], debounce_time=0.5):
+class GpiodHitCounter:
+    def __init__(self, logo_path="logo.png", sensor_pins=[26, 16, 5, 6], debounce_time=0.5):
         self.count = 0
         self.logo_path = logo_path
         self.sensor_pins = sensor_pins
         self.debounce_time = debounce_time
         self.last_hit_time = 0
+        self.running = True
         
         # Configure matrix options
         self.options = RGBMatrixOptions()
@@ -54,24 +54,51 @@ class DirectHitCounter:
             print("Using default font")
             self.font = ImageFont.load_default()
         
-        self.setup_gpio()
+        # Initialize gpiod
+        try:
+            self.chip = gpiod.Chip('gpiochip0')
+            self.setup_gpio()
+        except Exception as e:
+            print(f"Error initializing GPIO: {e}")
+            print("You may need to install gpiod: sudo apt install python3-gpiod")
+            sys.exit(1)
     
     def setup_gpio(self):
-        GPIO.setmode(GPIO.BCM)
-        
+        # Configure lines for input with pull-up
+        self.lines = []
         for pin in self.sensor_pins:
-            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(pin, GPIO.FALLING, callback=self.hit_detected, bouncetime=int(self.debounce_time * 1000))
+            try:
+                line = self.chip.get_line(pin)
+                line.request(consumer="hit_counter", type=gpiod.LINE_REQ_EV_FALLING_EDGE, flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP)
+                self.lines.append(line)
+                print(f"Set up GPIO pin {pin}")
+            except Exception as e:
+                print(f"Error setting up pin {pin}: {e}")
         
-        print(f"GPIO pins configured: {self.sensor_pins}")
+        # Start a thread to monitor GPIO
+        self.gpio_thread = threading.Thread(target=self.monitor_gpio)
+        self.gpio_thread.daemon = True
+        self.gpio_thread.start()
     
-    def hit_detected(self, channel):
+    def monitor_gpio(self):
+        while self.running:
+            for line in self.lines:
+                try:
+                    if line.event_wait(timeout=0.01):
+                        event = line.event_read()
+                        if event.type == gpiod.LINE_EVENT_FALLING_EDGE:
+                            self.hit_detected(line.offset())
+                except Exception as e:
+                    pass  # Ignore transient errors
+            time.sleep(0.01)  # Small delay to reduce CPU usage
+    
+    def hit_detected(self, pin):
         current_time = time.time()
         
         if current_time - self.last_hit_time > self.debounce_time:
             self.count += 1
             self.last_hit_time = current_time
-            print(f"Hit detected on pin {channel}! Count: {self.count}")
+            print(f"Hit detected on pin {pin}! Count: {self.count}")
             
             self.update_display()
     
@@ -158,9 +185,14 @@ class DirectHitCounter:
         # Clear the display
         self.canvas.Clear()
         self.matrix.SwapOnVSync(self.canvas)
-        # Clean up GPIO
-        GPIO.cleanup()
+        # Stop GPIO monitoring
+        self.running = False
+        if hasattr(self, 'gpio_thread'):
+            self.gpio_thread.join(timeout=1.0)
+        # Release GPIO lines
+        for line in self.lines:
+            line.release()
 
 if __name__ == "__main__":
-    counter = DirectHitCounter()
+    counter = GpiodHitCounter()
     counter.run()
