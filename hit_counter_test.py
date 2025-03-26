@@ -15,9 +15,6 @@ class TestHitCounter:
         
         self.display = MatrixDisplay()
         
-        # Add these options to prevent priority errors
-        self.display.parser.add_argument("--led-no-hardware-pulse", action="store_true",
-        help="Don't use hardware pin-pulse generation")
         self.display.parser.add_argument("--led-no-drop-privs", dest="drop_privileges",
         help="Don't drop privileges from 'root' after initializing the hardware.",
         action='store_false')
