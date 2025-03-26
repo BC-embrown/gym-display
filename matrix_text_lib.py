@@ -12,7 +12,7 @@ class MatrixTextDisplay(SampleBase):
     def __init__(self, *args, **kwargs):
         super(MatrixTextDisplay, self).__init__(*args, **kwargs)
         self.parser.add_argument("-t", "--text", help="The text to display on the RGB LED panel", default="Hello world!")
-        self.parser.add_argument("-m", "--mode", help="Display mode: 'scroll-h', 'scroll-up', 'scroll-down', 'random' or 'static'", default="static")
+        self.parser.add_argument("--mode", help="Display mode: 'scroll-h', 'scroll-up', 'scroll-down', 'random' or 'static'", default="static")
         self.parser.add_argument("--random-interval", help="Seconds between direction changes in random mode", default=5.0, type=float)
         self.parser.add_argument("--font-size", help="Font size to use", default=12, type=int)
         self.parser.add_argument("--color", help="Text color in R,G,B format (0-255)", default="255,255,0")
