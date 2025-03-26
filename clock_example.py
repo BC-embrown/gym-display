@@ -23,11 +23,11 @@ def main():
     # Initialize with current time instead of default text
     now = datetime.now()
     display.set_text(now.strftime("%H:%M:%S"))
-    
+    print("Text set")
     # Start the display
     if not display.start():
         return
-        
+    print("Start")
     # Setup signal handler for clean exit
     def signal_handler(sig, frame):
         print("Exiting...")
@@ -35,7 +35,7 @@ def main():
         sys.exit(0)
         
     signal.signal(signal.SIGINT, signal_handler)
-    
+    print("Signal handler set")
     try:
         # Display different clock formats
         formats = [
@@ -59,7 +59,7 @@ def main():
         ]
         color_index = 0
         color_change_time = time.time() + 5  # Change color every 5 seconds
-        
+        print("Color change time set")
         while True:
             # Get current time
             now = datetime.now()
