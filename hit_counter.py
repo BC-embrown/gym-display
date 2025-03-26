@@ -7,7 +7,7 @@ import digitalio
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
-
+import traceback
 class BreakBeamCounter:
     def __init__(self, logo_path="./logo.png", debounce_time=1):
         self.count = 0
@@ -187,6 +187,7 @@ class BreakBeamCounter:
     
     def display_image(self, image_path, duration=None):
         try:
+            path = os.path.dirname(os.path.realpath(__file__)) + "/" + 'logo.png'
             img = Image.open(image_path).convert('RGB')
             img.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
             
@@ -209,6 +210,7 @@ class BreakBeamCounter:
             
         except Exception as e:
             print(f"Error displaying image: {e}")
+            print(traceback.format_exc())
             return False
     
     def display_number(self, number):
