@@ -18,7 +18,7 @@ class DirectTestCounter:
         self.options.rows = 64
         self.options.cols = 64
         self.options.chain_length = 0
-        self.options.parallel = 0
+        self.options.parallel = 1
         self.options.hardware_mapping = 'regular'
         self.options.gpio_slowdown = 5  # Add this to help with stability
         self.options.brightness = 100
