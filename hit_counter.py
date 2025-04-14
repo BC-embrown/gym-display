@@ -17,6 +17,11 @@ class BreakBeamCounter:
         self.debounce_time = debounce_time
         self.last_hit_time = 0
         self.running = True
+        self.mode = "beam"  # "beam" or "manual"
+        self.flashing = False
+        self.input_buffer = ""
+        self.last_flash_time = 0
+        self.flash_interval = 0.5  # seconds between flashes
         
         # Configure the sensors
         # Using the pins specified in your documentation
@@ -116,6 +121,10 @@ class BreakBeamCounter:
                 self.kb_thread.start()
     
     def keyboard_listener(self):
+        print("Numeric Keypad Controls:")
+        print("Beam Mode: '+' to increment, '.' to switch modes")
+        print("Manual Mode: '.' to switch modes, 'Enter' to start input")
+        print("Input Mode: Type numbers, 'Enter' to confirm, 'Clear' to cancel")
         try:
             import termios, tty, sys
             def getch():
@@ -130,61 +139,97 @@ class BreakBeamCounter:
                 
             while self.running:
                 key = getch()
-                if key == ' ':
-                    self.hit_detected("Keyboard")
-                elif key.lower() == 'q':
-                    self.running = False
-                    break
+                if self.mode == "beam":
+                    if key == '+':  # Plus key on numpad
+                        self.hit_detected("Keyboard")
+                    elif key == '.':  # Decimal point key for mode switching
+                        self.switch_mode()
+                    elif key.lower() == 'q':
+                        self.running = False
+                        break
+                else:  # manual mode
+                    if key == '\r' or key == '\n':  # Enter key on numpad
+                        if self.flashing:
+                            self.cancel_input()  # Confirm input
+                        else:
+                            self.start_input()  # Start input mode
+                    elif key == '\x7f' or key == '\x08':  # Clear/Delete key on numpad
+                        self.cancel_input()  # Cancel input
+                    elif key == '.':  # Decimal point key for mode switching
+                        self.switch_mode()
+                    elif key.lower() == 'q':
+                        self.running = False
+                        break
+                    elif self.flashing and key.isdigit():
+                        self.input_buffer += key
+                        self.display_number(int(self.input_buffer))
+                    elif self.flashing and (key == '\x7f' or key == '\x08'):  # Clear/Delete key
+                        if self.input_buffer:
+                            self.input_buffer = self.input_buffer[:-1]
+                            if self.input_buffer:
+                                self.display_number(int(self.input_buffer))
+                            else:
+                                self.display_number(0)
         except Exception as e:
             print(f"Error in keyboard listener: {e}")
     
-    def monitor_sensors(self):
-        # Store previous states to detect changes
-        prev_states = {
-            "beam1": True,
-            "beam2": True,
-            "beam3": True,
-            "beam4": True
-        }
-        
-        while self.running:
-            try:
-                # Check each sensor
-                curr_states = {
-                    "beam1": self.break_beam1.value,
-                    "beam2": self.break_beam2.value, 
-                    "beam3": self.break_beam3.value,
-                    "beam4": self.break_beam4.value
-                }
-                
-                # Check for any beam break (LOW signal)
-                for name, state in curr_states.items():
-                    # If beam was previously unbroken (True) and is now broken (False)
-                    if prev_states[name] and not state:
-                        print(f"{name} was just broken!")
-                        self.hit_detected(name)
-                
-                # Update previous states
-                prev_states = curr_states.copy()
-                
-            except Exception as e:
-                print(f"Error reading sensors: {e}")
-            
-            # Small delay to prevent CPU overuse
-            time.sleep(0.01)
+    def switch_mode(self):
+        self.mode = "manual" if self.mode == "beam" else "beam"
+        print(f"Switched to {self.mode} mode")
+        if self.mode == "beam":
+            self.cancel_input()
+        self.update_display()
     
-    def hit_detected(self, source):
-        current_time = time.time()
-        
-        if current_time - self.last_hit_time > self.debounce_time:
-            self.count += 1
-            self.last_hit_time = current_time
-            print(f"Hit detected from {source}! Count: {self.count}")
-            
+    def start_input(self):
+        if not self.flashing:
+            self.flashing = True
+            self.input_buffer = ""
+            self.last_flash_time = time.time()
+            print("Input mode started - type numbers to set count")
+    
+    def cancel_input(self):
+        if self.flashing:
+            if self.input_buffer:  # If we have input, confirm it
+                try:
+                    new_count = int(self.input_buffer)
+                    self.count = new_count
+                    print(f"Count set to {self.count}")
+                except ValueError:
+                    print("Invalid input")
+            self.flashing = False
+            self.input_buffer = ""
+            print("Input mode ended")
+            self.update_display()
+        else:  # If not flashing, just clear any pending input
+            self.input_buffer = ""
             self.update_display()
     
     def update_display(self):
-        self.display_number(self.count)
+        if self.mode == "beam":
+            self.display_number(self.count)
+        else:  # manual mode
+            if self.flashing:
+                current_time = time.time()
+                if current_time - self.last_flash_time >= self.flash_interval:
+                    self.last_flash_time = current_time
+                    # Toggle between showing the number and a blank screen
+                    if self.input_buffer:
+                        self.display_number(int(self.input_buffer))
+                    else:
+                        self.display_number(0)
+            else:
+                self.display_number(self.count)
+    
+    def hit_detected(self, source):
+        if self.mode == "beam":  # Only increment in beam mode
+            current_time = time.time()
+            
+            if current_time - self.last_hit_time > self.debounce_time:
+                self.count += 1
+                self.last_hit_time = current_time
+                print(f"Hit detected from {source}! Count: {self.count}")
+                
+                self.update_display()
     
     def display_image(self, image_path, duration=None):
         try:
@@ -235,6 +280,41 @@ class BreakBeamCounter:
         # Display the image
         self.canvas.SetImage(img)
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def monitor_sensors(self):
+        # Store previous states to detect changes
+        prev_states = {
+            "beam1": True,
+            "beam2": True,
+            "beam3": True,
+            "beam4": True
+        }
+        
+        while self.running:
+            try:
+                # Check each sensor
+                curr_states = {
+                    "beam1": self.break_beam1.value,
+                    "beam2": self.break_beam2.value, 
+                    "beam3": self.break_beam3.value,
+                    "beam4": self.break_beam4.value
+                }
+                
+                # Check for any beam break (LOW signal)
+                for name, state in curr_states.items():
+                    # If beam was previously unbroken (True) and is now broken (False)
+                    if prev_states[name] and not state:
+                        print(f"{name} was just broken!")
+                        self.hit_detected(name)
+                
+                # Update previous states
+                prev_states = curr_states.copy()
+                
+            except Exception as e:
+                print(f"Error reading sensors: {e}")
+            
+            # Small delay to prevent CPU overuse
+            time.sleep(0.01)
     
     def run(self):
         try:
