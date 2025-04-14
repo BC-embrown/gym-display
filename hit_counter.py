@@ -37,7 +37,7 @@ class BreakBeamCounter:
         self.matrix = RGBMatrix(options=self.options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Try to load a font
+        # Try to load a font 
         self.font = None
         self.font_size = 32
         self.text_color = (214,160,255)
@@ -66,12 +66,11 @@ class BreakBeamCounter:
         self.sensor_thread.start()
     
     def setup_sensors(self):
-        # Define the pin mappings - update these according to your connections
+        # Define the pin mappings 
         # These map from the example D5 to appropriate board pins
         try:
             # Create digital inputs with pull-up resistors
             # The D5, D6, etc. names in the Adafruit example map to these GPIO pins
-            # Update these to match your actual connections
             self.break_beam1 = digitalio.DigitalInOut(board.D26)  # GPIO26 (Pin 37)
             self.break_beam2 = digitalio.DigitalInOut(board.D16)  # GPIO16 (Pin 36)
             self.break_beam3 = digitalio.DigitalInOut(board.D5)   # GPIO5 (Pin 29)
