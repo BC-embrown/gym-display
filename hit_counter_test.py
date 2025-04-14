@@ -12,6 +12,11 @@ class DirectTestCounter:
         self.logo_path = logo_path
         self.debounce_time = debounce_time
         self.last_hit_time = 0
+        self.mode = "beam"  # "beam" or "manual"
+        self.flashing = False
+        self.input_buffer = ""
+        self.last_flash_time = 0
+        self.flash_interval = 0.5  # seconds between flashes
         
         # Configure matrix options
         self.options = RGBMatrixOptions()
@@ -52,7 +57,10 @@ class DirectTestCounter:
             self.font = ImageFont.load_default()
     
     def keyboard_listener(self):
-        print("Press SPACE to simulate a hit, Q to quit")
+        print("Numeric Keypad Controls:")
+        print("Beam Mode: '+' to increment, '.' to switch modes")
+        print("Manual Mode: '.' to switch modes, 'Enter' to start input")
+        print("Input Mode: Type numbers, 'Enter' to confirm, 'Clear' to cancel")
         try:
             import termios, tty, sys
             def getch():
@@ -67,12 +75,84 @@ class DirectTestCounter:
                 
             while True:
                 key = getch()
-                if key == ' ':
-                    self.hit_detected()
-                elif key.lower() == 'q':
-                    break
+                if self.mode == "beam":
+                    if key == '+':  # Plus key on numpad
+                        self.hit_detected()
+                    elif key == '.':  # Decimal point key for mode switching
+                        self.switch_mode()
+                    elif key.lower() == 'q':
+                        break
+                else:  # manual mode
+                    if key == '\r' or key == '\n':  # Enter key on numpad
+                        if self.flashing:
+                            self.cancel_input()  # Confirm input
+                        else:
+                            self.start_input()  # Start input mode
+                    elif key == '\x7f' or key == '\x08':  # Clear/Delete key on numpad
+                        self.cancel_input()  # Cancel input
+                    elif key == '.':  # Decimal point key for mode switching
+                        self.switch_mode()
+                    elif key.lower() == 'q':
+                        break
+                    elif self.flashing and key.isdigit():
+                        self.input_buffer += key
+                        self.display_number(int(self.input_buffer))
+                    elif self.flashing and (key == '\x7f' or key == '\x08'):  # Clear/Delete key
+                        if self.input_buffer:
+                            self.input_buffer = self.input_buffer[:-1]
+                            if self.input_buffer:
+                                self.display_number(int(self.input_buffer))
+                            else:
+                                self.display_number(0)
         except Exception as e:
             print(f"Error in keyboard listener: {e}")
+    
+    def switch_mode(self):
+        self.mode = "manual" if self.mode == "beam" else "beam"
+        print(f"Switched to {self.mode} mode")
+        if self.mode == "beam":
+            self.cancel_input()
+        self.update_display()
+    
+    def start_input(self):
+        if not self.flashing:
+            self.flashing = True
+            self.input_buffer = ""
+            self.last_flash_time = time.time()
+            print("Input mode started - type numbers to set count")
+    
+    def cancel_input(self):
+        if self.flashing:
+            if self.input_buffer:  # If we have input, confirm it
+                try:
+                    new_count = int(self.input_buffer)
+                    self.count = new_count
+                    print(f"Count set to {self.count}")
+                except ValueError:
+                    print("Invalid input")
+            self.flashing = False
+            self.input_buffer = ""
+            print("Input mode ended")
+            self.update_display()
+        else:  # If not flashing, just clear any pending input
+            self.input_buffer = ""
+            self.update_display()
+    
+    def update_display(self):
+        if self.mode == "beam":
+            self.display_number(self.count)
+        else:  # manual mode
+            if self.flashing:
+                current_time = time.time()
+                if current_time - self.last_flash_time >= self.flash_interval:
+                    self.last_flash_time = current_time
+                    # Toggle between showing the number and a blank screen
+                    if self.input_buffer:
+                        self.display_number(int(self.input_buffer))
+                    else:
+                        self.display_number(0)
+            else:
+                self.display_number(self.count)
     
     def hit_detected(self):
         current_time = time.time()
@@ -83,9 +163,6 @@ class DirectTestCounter:
             print(f"Hit detected! Count: {self.count}")
             
             self.update_display()
-    
-    def update_display(self):
-        self.display_number(self.count)
     
     def display_image(self, image_path, duration=None):
         try:
