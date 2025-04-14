@@ -216,7 +216,7 @@ class BreakBeamCounter:
             return False
     
     def display_number(self, number):
-        # Create a new image with black background
+
         img = Image.new('RGB', (self.matrix.width, self.matrix.height), (0, 0, 0))
         draw = ImageDraw.Draw(img)
         
