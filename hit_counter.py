@@ -217,22 +217,19 @@ class DirectTestCounter:
         self.canvas.SetImage(img)
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
-    def init(self):
-        print("Starting test hit counter...")
-        # Display logo if available
-        init_load_wait_time = 2
-        if os.path.exists(self.logo_path):
-            print(f"Displaying logo for {init_load_wait_time} seconds: {self.logo_path}")
-            self.display_image(self.logo_path, init_load_wait_time)
-        else:
-            print(f"Logo file not found: {self.logo_path}")
-
-        # Initialize counter display
-        self.display_number(0)
-
     def run(self):
         try:
-            self.init()
+            print("Starting test hit counter...")
+            # Display logo if available
+            init_load_wait_time = 2
+            if os.path.exists(self.logo_path):
+                print(f"Displaying logo for {init_load_wait_time} seconds: {self.logo_path}")
+                self.display_image(self.logo_path, init_load_wait_time)
+            else:
+                print(f"Logo file not found: {self.logo_path}")
+
+            # Initialize counter display
+            self.display_number(0)
             
             # Start keyboard listener thread
             kb_thread = threading.Thread(target=self.check_for_keyboard_input)
@@ -252,9 +249,6 @@ class DirectTestCounter:
         # Clear the display
         self.canvas.Clear()
         self.matrix.SwapOnVSync(self.canvas)
-
-
-
 
     def check_for_keyboard_input(self):
         plus = "-"
