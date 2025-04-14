@@ -9,7 +9,6 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import threading
 import traceback
 import getpass
-import keyboard as kb
 
 class BreakBeamCounter:
     def __init__(self, logo_path="./logo.png", debounce_time=1):
@@ -321,10 +320,9 @@ class BreakBeamCounter:
         try:
             print("Starting break beam counter...")
 
-            init_load_wait_time = 1
             if os.path.exists(self.logo_path):
-                print(f"Displaying logo for {init_load_wait_time} seconds: {self.logo_path}")
-                self.display_image(self.logo_path, init_load_wait_time)
+                print(f"Displaying logo for 5 seconds: {self.logo_path}")
+                self.display_image(self.logo_path, 5)
             
             # Initialize counter display
             self.display_number(0)
@@ -349,49 +347,6 @@ class BreakBeamCounter:
         self.running = False
         if hasattr(self, 'sensor_thread'):
             self.sensor_thread.join(timeout=1.0)
-
-    def check_for_keyboard_input(self):
-        plus = "-"
-        minus = "+"
-        
-        while True:
-            if kb.is_pressed(minus):
-                self.decrement_counter()
-                while kb.is_pressed(minus):
-                    pass
-            elif kb.is_pressed(plus):
-                self.increment_counter()
-                while kb.is_pressed(plus):
-                    pass
-            elif kb.is_pressed("/"):
-                self.display_number("/")
-                while kb.is_pressed("/"):
-                    pass
-            elif kb.is_pressed("0"):
-                self.count = 0
-                self.update_display()
-                while kb.is_pressed("0"):
-                    pass
-
-    def increment_counter(self):
-        current_time = time.time()
-        
-        if current_time - self.last_hit_time > self.debounce_time:
-            self.count += 1
-            self.last_hit_time = current_time
-            print(f"Manual increment detected! Count: {self.count}")
-            
-            self.update_display()
-
-    def decrement_counter(self):
-        current_time = time.time()
-        
-        if current_time - self.last_hit_time > self.debounce_time:
-            self.count -= 1
-            self.last_hit_time = current_time
-            print(f"Manual decrement detected! Count: {self.count}")
-            
-            self.update_display()
 
 if __name__ == "__main__":
     counter = BreakBeamCounter()
