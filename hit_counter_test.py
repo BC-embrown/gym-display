@@ -5,6 +5,7 @@ import os
 import threading
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
+import keyboard as kb
 
 class DirectTestCounter:
     def __init__(self, logo_path="logo.png", debounce_time=0.5):
@@ -216,22 +217,25 @@ class DirectTestCounter:
         self.canvas.SetImage(img)
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
+    def init(self):
+        print("Starting test hit counter...")
+        # Display logo if available
+        init_load_wait_time = 2
+        if os.path.exists(self.logo_path):
+            print(f"Displaying logo for {init_load_wait_time} seconds: {self.logo_path}")
+            self.display_image(self.logo_path, init_load_wait_time)
+        else:
+            print(f"Logo file not found: {self.logo_path}")
+
+        # Initialize counter display
+        self.display_number(0)
+
     def run(self):
         try:
-            print("Starting test hit counter...")
-            
-            # Display logo if available
-            if os.path.exists(self.logo_path):
-                print(f"Displaying logo for 3 seconds: {self.logo_path}")
-                self.display_image(self.logo_path, 3)
-            else:
-                print(f"Logo file not found: {self.logo_path}")
-            
-            # Initialize counter display
-            self.display_number(0)
+            self.init()
             
             # Start keyboard listener thread
-            kb_thread = threading.Thread(target=self.keyboard_listener)
+            kb_thread = threading.Thread(target=self.check_for_keyboard_input)
             kb_thread.daemon = True
             kb_thread.start()
             
@@ -248,6 +252,71 @@ class DirectTestCounter:
         # Clear the display
         self.canvas.Clear()
         self.matrix.SwapOnVSync(self.canvas)
+
+
+
+
+    def check_for_keyboard_input(self):
+        plus = "-"
+        minus = "+"
+        
+        while True:
+            if kb.is_pressed(minus):
+                self.decrement_counter()
+                while kb.is_pressed(minus):
+                    pass
+            elif kb.is_pressed(plus):
+                self.increment_counter()
+                while kb.is_pressed(plus):
+                    pass
+            elif kb.is_pressed("/"):
+                self.display_number("/")
+                while kb.is_pressed("/"):
+                    pass
+            elif kb.is_pressed("0"):
+                self.count = 0
+                self.update_display()
+                while kb.is_pressed("0"):
+                    pass
+
+    def increment_counter(self):
+        current_time = time.time()
+        
+        if current_time - self.last_hit_time > self.debounce_time:
+            self.count += 1
+            self.last_hit_time = current_time
+            print(f"Manual increment detected! Count: {self.count}")
+            
+            self.update_display()
+
+    def decrement_counter(self):
+        current_time = time.time()
+        
+        if current_time - self.last_hit_time > self.debounce_time:
+            self.count -= 1
+            self.last_hit_time = current_time
+            print(f"Manual decrement detected! Count: {self.count}")
+            
+            self.update_display()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     counter = DirectTestCounter()
