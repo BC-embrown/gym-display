@@ -176,6 +176,7 @@ class DirectTestCounter:
         try:
             # Wrapping this in a try catch, it shouldn't ever fail, but just incase, I don't trust casting user input, even when I control the inputs 
             current_strength_val = int(self.current_strength_value)
+            self.current_strength_value = ""
             self.total_strength_value += current_strength_val
             self.display_strength_value()
         except:
