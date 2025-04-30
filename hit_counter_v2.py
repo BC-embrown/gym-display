@@ -124,19 +124,23 @@ class DirectTestCounter:
                         self.strength_keyboard_input_check(keycode)
 
     def change_mode(self):
-        # if you want it to show the logo or something inbetween changing modes uncomment the line below
-        #logo_show_time = 1 
-        #self.display_image(self.logo_path, logo_show_time)
+        # if you dont want it to show the logo inbetween changing modes comment the lines below
+        logo_show_time = 1 
+        self.display_image(self.logo_path, logo_show_time)
+        
         if self.mode == "beam":
             self.mode = "strength"
+            self.display_strength_value()
         elif self.mode == "strength":
             self.mode = "beam"
+            self.display_beam_value()
 
     ###########################################################################
 
     ########################### STRENGTH MODE #################################
 
     ###########################################################################
+
     def strength_keyboard_input_check(self, keycode):
         if keycode in ('KEY_EQUAL', 'KEY_KPPLUS'):
             self.strength_equals_pressed()
@@ -170,10 +174,10 @@ class DirectTestCounter:
             # ignore the command bc they've not assigned a value yet
             return
         try:
-            # Wrapping this in a try catch, it shouldn't ever fail, but just incase
+            # Wrapping this in a try catch, it shouldn't ever fail, but just incase, I don't trust casting user input, even when I control the inputs 
             current_strength_val = int(self.current_strength_value)
             self.total_strength_value += current_strength_val
-            self.display_number(f"{self.total_strength_value}kg")
+            self.display_strength_value()
         except:
             pass
 
@@ -190,12 +194,16 @@ class DirectTestCounter:
         self.total_strength_value = 0
         self.current_strength_value = ""
 
+    def display_strength_value(self):
+        self.display_number(f"{self.total_strength_value}kg")
+
+
     ###########################################################################
 
     ########################### BEAM MODE #################################
 
     ###########################################################################
-                        
+
     def beam_keyboard_input_check(self, keycode):
         if keycode == 'KEY_MINUS':
             self.decrement_counter()
@@ -207,7 +215,7 @@ class DirectTestCounter:
             self.change_mode()
         elif keycode in ('KEY_0', 'KEY_KP0'):
             self.count = 0
-            self.update_display()
+            self.display_beam_value()
 
     def increment_counter(self):
         current_time = time.time()
@@ -215,7 +223,7 @@ class DirectTestCounter:
             self.count += 1
             self.last_hit_time = current_time
             print(f"Increment! Count: {self.count}")
-            self.update_display()
+            self.display_beam_value()
 
     def decrement_counter(self):
         current_time = time.time()
@@ -223,9 +231,9 @@ class DirectTestCounter:
             self.count -= 1
             self.last_hit_time = current_time
             print(f"Decrement! Count: {self.count}")
-            self.update_display()
+            self.display_beam_value()
 
-    def update_display(self):
+    def display_beam_value(self):
         self.display_number(self.count)
 
     def display_image(self, image_path, duration=None):
